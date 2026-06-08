@@ -51,7 +51,7 @@ You can capture the running dashboard from `http://localhost:8000`.
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/quintava.git
+git clone https://github.com/Django-Wu/quintava.git
 cd quintava
 ```
 

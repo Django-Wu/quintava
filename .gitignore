@@ -2,11 +2,39 @@
 .env.*
 !.env.example
 venv/
+.venv/
+env/
+ENV/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+
+# Local databases and paper-trading history
 paper_trades.db
 *.db-journal
-.DS_Store
+db.sqlite3
+db.sqlite3-journal
+
+# Logs and local runtime files
+*.log
 terminal_server.log
+.DS_Store
+
+# Tests and coverage
 .pytest_cache/
+.coverage
+.coverage.*
 htmlcov/
+coverage.xml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Editor and notebook state
+.idea/
+.vscode/
+.ipynb_checkpoints/
