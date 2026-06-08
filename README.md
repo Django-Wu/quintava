@@ -13,19 +13,7 @@ Quintava is an open source research tool for studying short-horizon BTC predicti
 
 ## Screenshot
 
-Add a dashboard screenshot at:
-
-```text
-docs/screenshot.png
-```
-
-Then update this section with:
-
-```markdown
 ![Quintava dashboard](docs/screenshot.png)
-```
-
-You can capture the running dashboard from `http://localhost:8000`.
 
 ## What It Solves
 
