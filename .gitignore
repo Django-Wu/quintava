@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+venv/
+__pycache__/
+*.pyc
+paper_trades.db
+*.db-journal
+.DS_Store
+terminal_server.log
+.pytest_cache/
+htmlcov/

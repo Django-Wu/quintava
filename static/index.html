@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quintava · Панель управления</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090f;
+    --bg2: #0b0e16;
+    --panel: rgba(20, 25, 38, 0.72);
+    --panel-solid: #141a26;
+    --panel2: rgba(27, 34, 50, 0.6);
+    --border: rgba(255, 255, 255, 0.07);
+    --border2: rgba(255, 255, 255, 0.12);
+    --text: #eef2f8;
+    --muted: #8893a7;
+    --green: #2dd4a7;
+    --red: #f6566c;
+    --accent: #f7931a;
+    --accent2: #ffb454;
+    --up: #2dd4a7;
+    --down: #f6566c;
+    --blue: #5b8cff;
+    --violet: #9d7bff;
+    --shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(247,147,26,.10), transparent 60%),
+      radial-gradient(1000px 500px at 0% 0%, rgba(91,140,255,.10), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px; line-height: 1.45; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Header */
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 10px 18px;
+    background: rgba(10, 13, 20, 0.7); backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+  }
+  .brand { display:flex; align-items:center; gap: 10px; }
+  .brand .coin {
+    width: 32px; height: 32px; border-radius: 9px; display:grid; place-items:center;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #1a1205; font-weight: 900; font-size: 17px;
+    box-shadow: 0 6px 20px rgba(247,147,26,.4);
+  }
+  .brand .title { font-weight: 800; font-size: 15px; letter-spacing: -.3px; }
+  .brand .sub { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .hmarket {
+    display:flex; align-items:center; gap:16px; margin-left: 6px; min-width:0;
+  }
+  .hprice { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .hprice .k { color:var(--muted); font-size:10px; font-weight:700; }
+  .hprice .v { font-size: 19px; font-weight: 850; letter-spacing: -.5px; white-space:nowrap; }
+  .hprice.target .v { color: var(--muted); }
+  .hsep { width:1px; height:30px; background:var(--border2); }
+  .hfinal-row { display:flex; align-items:baseline; gap:8px; }
+  .hdelta { font-size:12px; font-weight:800; white-space:nowrap; }
+  .spacer { flex: 1; }
+  .pill {
+    padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    display:flex; align-items:center; gap:7px; border: 1px solid var(--border);
+  }
+  .pill .dot { width:7px; height:7px; border-radius:50%; background: var(--muted); }
+  .pill.live { background: rgba(45,212,167,.12); color: var(--green); border-color: rgba(45,212,167,.25); }
+  .pill.live .dot { background: var(--green); box-shadow:0 0 8px var(--green); animation: pulse 1.6s infinite; }
+  .pill.off { background: rgba(246,86,108,.12); color: var(--red); border-color: rgba(246,86,108,.25); }
+  .pill.off .dot { background: var(--red); }
+  .pill.mode { background: rgba(91,140,255,.12); color: var(--blue); border-color: rgba(91,140,255,.25); }
+  #headerBalance {
+    background: rgba(247,147,26,.14);
+    color: var(--accent2);
+    border-color: rgba(247,147,26,.38);
+    box-shadow: 0 0 18px rgba(247,147,26,.12);
+  }
+  .chart-toggle {
+    display:flex; align-items:center; gap:3px; padding:3px;
+    background:rgba(255,255,255,.04); border:1px solid var(--border2);
+    border-radius:999px;
+  }
+  .chart-toggle button {
+    width:28px; height:24px; min-width:0; flex:0 0 auto; padding:0;
+    border:none; border-radius:999px; background:transparent; color:var(--muted);
+    font-size:13px; display:grid; place-items:center;
+  }
+  .chart-toggle button svg { width:15px; height:15px; display:block; }
+  .chart-toggle button.active {
+    background:rgba(247,147,26,.16); color:var(--accent2);
+  }
+  .icon-btn {
+    width:32px; height:30px; min-width:0; flex:0 0 auto; padding:0;
+    display:grid; place-items:center; border-radius:10px;
+    background:rgba(255,255,255,.04); border:1px solid var(--border2);
+    color:var(--text); font-size:15px; line-height:1;
+  }
+  .icon-btn svg { width:16px; height:16px; display:block; }
+  .icon-btn:hover { background:rgba(247,147,26,.14); color:var(--accent2); }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+  /* Layout */
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 5px 8px; }
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-right: 338px;
+  }
+  .col { display:flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .grid > .col:nth-child(1){ order: 2; }
+  .grid > .col:nth-child(2){ order: 1; }
+  .grid > .col:nth-child(3){
+    position: fixed;
+    top: 78px;
+    right: max(8px, calc((100vw - 1400px) / 2 + 8px));
+    width: 330px;
+    max-height: calc(100vh - 86px);
+    overflow-y: auto;
+    z-index: 20;
+  }
+  .grid > .col:nth-child(3) .card { padding: 8px; }
+  @media (max-width: 1200px){
+    .grid { margin-right: 0; }
+    .grid > .col:nth-child(1),
+    .grid > .col:nth-child(2),
+    .grid > .col:nth-child(3){
+      position: static;
+      width: auto;
+      max-height: none;
+      overflow: visible;
+      order: initial;
+    }
+  }
+
+  .card {
+    background: var(--panel); backdrop-filter: blur(14px);
+    border: 1px solid var(--border); border-radius: 11px; padding: 7px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .85px;
+    color: var(--muted); margin-bottom: 6px; font-weight: 700; display:flex;
+    align-items:center; gap: 8px;
+  }
+  .card h2 .tag { margin-left:auto; font-size:10px; color: var(--muted);
+    text-transform:none; letter-spacing:0; font-weight:500; }
+  .card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px; }
+  .card-head h2 { margin-bottom: 0; }
+  .mini-btn {
+    background: var(--panel2); color: var(--muted); border:1px solid var(--border2);
+    border-radius:7px; padding:3px 8px; font-size:10px; font-weight:700; cursor:pointer;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 78px;
+    line-height: 1.2;
+  }
+  .mini-btn:hover { color: var(--text); }
+
+  /* HERO 5m */
+  .hero { background:
+      linear-gradient(135deg, rgba(247,147,26,.10), rgba(157,123,255,.06)),
+      var(--panel); border-color: var(--border2); position: relative; overflow:hidden; }
+  .hero::before { content:""; position:absolute; inset:0;
+    background: radial-gradient(500px 200px at 90% 0%, rgba(247,147,26,.12), transparent 70%); pointer-events:none; }
+  .hero-top { display:flex; align-items:center; gap:7px; margin-bottom:4px; }
+  .hero-top .ic { width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#1a1205; font-weight:900; font-size:11px; }
+  .hero-top .t { font-weight:800; font-size:12px; }
+  .hero-top .s { display:none; }
+  .hero-top .hero-copy { flex:1; min-width:0; }
+  .m5-auto {
+    flex:0 0 auto; width:auto; min-width:0; padding:5px 8px; border-radius:8px;
+    font-size:10px; line-height:1.1; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#1a1205; border:none; box-shadow:0 6px 18px rgba(247,147,26,.18);
+  }
+  .m5-auto:disabled { opacity:.6; cursor:progress; transform:none; }
+  .m5-auto-hint {
+    display:none; color:var(--muted); font-size:9px; line-height:1.35; margin:0 0 4px;
+    padding:5px 7px; background:var(--panel2); border-radius:8px; border:1px solid var(--border);
+  }
+  .m5-auto-hint.ok{ display:block; color:var(--green); border-color:rgba(45,212,167,.25); background:rgba(45,212,167,.08); }
+  .m5-auto-hint.warn{ display:block; color:var(--accent2); border-color:rgba(247,147,26,.25); background:rgba(247,147,26,.08); }
+
+  .verdict {
+    display:flex; align-items:center; gap:8px; padding:5px 7px; border-radius:9px;
+    background: var(--panel2); border:1px solid var(--border); margin-bottom:4px;
+  }
+  .verdict .big { font-size:18px; font-weight:900; letter-spacing:-.8px; line-height:1; }
+  .verdict .big.UP { color:var(--up);} .verdict .big.DOWN { color:var(--down);} .verdict .big.NONE{color:var(--muted);font-size:14px;}
+  .verdict .meta { flex:1; }
+  .verdict .meta .lbl { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+  .verdict .meta .conf { font-size:10px; font-weight:700; margin-top:1px; }
+  .verdict .status { padding:3px 7px; border-radius:999px; font-size:9px; font-weight:700; }
+  .verdict .status.win { background:rgba(45,212,167,.15); color:var(--green); }
+  .verdict .status.lose { background:rgba(246,86,108,.15); color:var(--red); }
+  .verdict .status.wait { background:rgba(136,147,167,.15); color:var(--muted); }
+
+  .trio { display:grid; grid-template-columns: repeat(3,1fr); gap:5px; margin-bottom:4px; }
+  .mini { background: var(--panel2); border:1px solid var(--border); border-radius:8px; padding:4px 6px; }
+  .mini .k { font-size:8px; color:var(--muted); margin-bottom:2px; }
+  .mini .v { font-size:12px; font-weight:800; letter-spacing:-.3px; }
+  .mini .x { font-size:8px; margin-top:2px; font-weight:600; }
+  .mini.count .v { color: var(--accent2); }
+
+  .chance-row { display:flex; gap:5px; align-items:stretch; margin-bottom:2px; }
+  .chance-main { flex:1; background: var(--panel2); border:1px solid var(--border);
+    border-radius:9px; padding:5px 7px; }
+  .chance-main .k { font-size:8px; color:var(--muted); }
+  .chance-main .big { font-size:19px; font-weight:900; letter-spacing:-1.2px; line-height:1.05; margin:0; }
+  .chance-main .big.good{color:var(--green);} .chance-main .big.bad{color:var(--red);} .chance-main .big.neutral{color:var(--accent);}
+  .chance-main .fair { font-size:9px; color:var(--muted); }
+  .chance-side { width:42%; display:flex; flex-direction:column; gap:3px; }
+  .chance-side .box { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:4px 6px; }
+  .chance-side .k { font-size:8px; color:var(--muted); }
+  .chance-side .v { font-size:11px; font-weight:700; margin-top:1px; }
+
+  .past-lbl { font-size:8px; color:var(--muted); margin:3px 0 2px; }
+  .strip { display:flex; gap:4px; overflow-x:auto; padding-bottom:2px; }
+  .strip::-webkit-scrollbar { height:6px; } .strip::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px; }
+  .cell { flex:0 0 auto; width:20px; text-align:center; }
+  .dot { width:16px; height:16px; border-radius:50%; display:grid; place-items:center;
+    font-size:8px; font-weight:800; color:#0a0d14; margin:0 auto; }
+  .dot.UP { background:linear-gradient(135deg,var(--up),#1fb98f);} .dot.DOWN{background:linear-gradient(135deg,var(--down),#d63a52);}
+  .dot.win { background:linear-gradient(135deg,var(--up),#1fb98f);} .dot.loss{background:linear-gradient(135deg,var(--down),#d63a52);} .dot.skip{background:var(--border2);color:var(--muted);}
+  .mk { font-size:8px; font-weight:900; margin-top:1px; }
+  .mk.ok{color:var(--green);} .mk.no{color:var(--red);} .mk.skip{color:var(--muted);}
+  .cell .tm { display:none; }
+
+  /* Stat cards — compact grid inside a single card */
+  .stats { display:grid; grid-template-columns: repeat(3,1fr); gap:1px; background:var(--border);
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .stat { background: var(--panel-solid); padding:6px 8px; }
+  .stat .k { font-size:9px; color:var(--muted); font-weight:500; }
+  .stat .v { font-size:14px; font-weight:800; margin-top:1px; letter-spacing:-.5px; }
+  .stat .v.good{color:var(--green);} .stat .v.bad{color:var(--red);} .stat .v.neutral{color:var(--accent2);}
+  .stat .x { font-size:8px; color:var(--muted); margin-top:1px; }
+
+  /* Chart */
+  #chart { height: 320px; width: 100%; border-radius:10px; overflow:hidden; }
+
+  /* Indicators */
+  .irow { display:flex; justify-content:space-between; align-items:center; padding:4px 0;
+    border-bottom:1px solid var(--border); }
+  .irow:last-child{ border-bottom:none; }
+  .irow .k { color:var(--muted); font-size:10px; }
+  .irow .v { font-weight:700; font-size:11px; }
+  .txt-up{color:var(--up);} .txt-down{color:var(--down);}
+
+  /* Controls */
+  .ctrl { display:flex; flex-direction:column; gap:7px; }
+  .ctrl .lab { display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--muted); margin-bottom:3px; }
+  .ctrl .lab b { color:var(--text); font-size:11px; }
+  input[type=range]{ -webkit-appearance:none; width:100%; height:4px; border-radius:3px;
+    background: var(--border2); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:14px;
+    border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    cursor:pointer; box-shadow:0 2px 8px rgba(247,147,26,.5); }
+  select{ width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--border2);
+    border-radius:9px; padding:6px 8px; font-family:inherit; font-size:12px; cursor:pointer; }
+  .btns{ display:flex; gap:10px; }
+  button{ flex:1; cursor:pointer; border:1px solid var(--border2); background:var(--panel2);
+    color:var(--text); border-radius:10px; padding:7px; font-weight:700; font-family:inherit;
+    font-size:12px; transition:.15s; }
+  button:hover{ background:var(--border2); transform:translateY(-1px); }
+  button.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#1a1205; border:none; }
+  button.danger{ color:var(--red); }
+  .note{ display:none; color:var(--muted); font-size:10px; margin-top:8px; line-height:1.45;
+    padding:8px; background:var(--panel2); border-radius:9px; border:1px solid var(--border); }
+  .auto-btn{ width:100%; flex:0 0 auto; font-size:13px; padding:9px;
+    display:flex; align-items:center; justify-content:center; gap:6px; }
+  .auto-btn:disabled{ opacity:.6; cursor:progress; transform:none; }
+  .auto-hint{ color:var(--muted); font-size:10px; line-height:1.4; margin:-2px 0 4px;
+    padding:7px 9px; background:var(--panel2); border-radius:9px; border:1px solid var(--border); }
+  .auto-hint.ok{ color:var(--green); border-color:rgba(45,212,167,.25); background:rgba(45,212,167,.08); }
+  .auto-hint.warn{ color:var(--accent2); border-color:rgba(247,147,26,.25); background:rgba(247,147,26,.08); }
+
+  /* Table */
+  table{ width:100%; border-collapse:collapse; font-size:10px; }
+  th,td{ text-align:left; padding:4px 5px; border-bottom:1px solid var(--border); }
+  th{ color:var(--muted); font-weight:600; font-size:9px; text-transform:uppercase; letter-spacing:.3px; }
+  td.UP{color:var(--up);font-weight:700;} td.DOWN{color:var(--down);font-weight:700;}
+  .badge{ padding:2px 6px; border-radius:7px; font-size:9px; font-weight:700; }
+  .badge.win{ background:rgba(45,212,167,.15); color:var(--green); }
+  .badge.loss{ background:rgba(246,86,108,.15); color:var(--red); }
+  .badge.pending{ background:rgba(136,147,167,.15); color:var(--muted); }
+
+  /* Backtest */
+  .bt-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; margin-bottom:6px; }
+  .bt-grid .fld{ min-width:0; }
+  .bt-grid .fld span{ display:block; color:var(--muted); font-size:9px; margin-bottom:3px; }
+  .bt-grid input{ width:100%; background:var(--panel2); color:var(--text);
+    border:1px solid var(--border2); border-radius:8px; padding:5px 6px; font-family:inherit; font-size:11px; }
+  #btRun { grid-column: 1 / -1; }
+
+  .toast{ position:fixed; bottom:24px; right:24px; background:var(--panel-solid);
+    border:1px solid var(--border2); border-radius:13px; padding:14px 18px; opacity:0;
+    transform:translateY(12px); transition:.25s; pointer-events:none; z-index:100; box-shadow:var(--shadow);
+    font-weight:600; }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.62); backdrop-filter: blur(10px);
+    padding: 18px;
+  }
+  .modal-backdrop.show { display:flex; }
+  .modal {
+    width: min(420px, 100%);
+    background: var(--panel-solid);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    box-shadow: 0 25px 80px rgba(0,0,0,.7);
+    padding: 14px;
+  }
+  .modal-head {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .modal-title { font-size:13px; font-weight:800; letter-spacing:.3px; }
+  .modal-close {
+    width:28px; height:28px; flex:0 0 auto; padding:0;
+    border-radius:9px; font-size:18px; color:var(--muted);
+  }
+  .modal-close:hover { color:var(--text); }
+  @media (max-width: 900px){
+    .brand .sub { display: none; }
+    header { gap: 10px; padding: 9px 12px; }
+    .hmarket { gap:9px; }
+    .hprice .v { font-size: 16px; }
+    .hprice .k { font-size:9px; }
+    .hsep { height:25px; }
+    .hdelta { display:none; }
+    .chart-toggle { display:none; }
+  }
+  .collapsed .ctrl, .collapsed .note,
+  .collapsed .bt-grid, .collapsed #btResult { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="coin" aria-label="Quintava">Q</div>
+    <div>
+      <div class="title">Quintava</div>
+      <div class="sub">Аналитика рынка · данные Binance в реальном времени</div>
+    </div>
+  </div>
+  <div class="hmarket">
+    <div class="hprice target">
+      <span class="k">Целевая цена</span>
+      <span class="v tnum" id="headerTargetPrice">—</span>
+    </div>
+    <div class="hsep"></div>
+    <div class="hprice final">
+      <span class="k">Финальная цена</span>
+      <div class="hfinal-row">
+        <span class="v tnum" id="price">—</span>
+        <span class="hdelta" id="priceArrow"></span>
+      </div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="chart-toggle" title="Тип графика">
+    <button id="chartCandlesBtn" class="active" type="button" title="Свечи" aria-label="Свечи">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M8 4v3M8 17v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="5.5" y="7" width="5" height="10" rx="1.3" stroke="currentColor" stroke-width="2"/>
+        <path d="M16 2v4M16 16v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="13.5" y="6" width="5" height="10" rx="1.3" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </button>
+    <button id="chartLineBtn" type="button" title="Линия" aria-label="Линия">⌇</button>
+  </div>
+  <button class="icon-btn" id="botSettingsBtn" type="button" title="Настройки бота" aria-label="Настройки бота">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <rect x="5" y="7" width="14" height="11" rx="4" stroke="currentColor" stroke-width="2"/>
+      <path d="M9 12h.01M15 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <path d="M9.5 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <span class="pill off" id="conn"><span class="dot"></span>подключение…</span>
+  <span class="pill mode" id="headerBalance">Баланс: —</span>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT -->
+    <div class="col">
+
+      <!-- HERO: 5m market -->
+      <div class="card hero">
+        <div class="hero-top">
+          <div class="ic">5м</div>
+          <div class="hero-copy">
+            <div class="t">Рынок вверх или вниз · 5 минут</div>
+            <div class="s">5-минутное окно по выбранному рынку</div>
+          </div>
+          <button class="m5-auto" id="m5AutoBtn" type="button">Авто 5м</button>
+        </div>
+        <div class="m5-auto-hint" id="m5AutoHint"></div>
+
+        <div class="trio">
+          <div class="mini">
+            <div class="k">Целевая цена (старт окна)</div>
+            <div class="v tnum" id="m5Open">—</div>
+          </div>
+          <div class="mini">
+            <div class="k">Сейчас</div>
+            <div class="v tnum" id="m5Now">—</div>
+            <div class="x" id="m5Lead">—</div>
+          </div>
+          <div class="mini">
+            <div class="k">До конца окна</div>
+            <div class="v tnum" id="m5Countdown">—</div>
+          </div>
+        </div>
+
+        <div class="verdict">
+          <div class="big NONE" id="m5Pred">ЖДЁМ</div>
+          <div class="meta">
+            <div class="lbl">Прогноз бота на это окно</div>
+            <div class="conf" id="m5Conf">нет сигнала</div>
+            <div class="conf" id="m5Payout" style="margin-top:4px;color:var(--accent2)"></div>
+          </div>
+          <div class="status wait" id="m5Status">бот вне игры</div>
+        </div>
+
+        <div class="chance-row">
+          <div class="chance-main">
+            <div class="k">Шанс выигрыша бота (последние <span id="m5N">0</span> окон)</div>
+            <div class="big neutral" id="m5WinRate">—</div>
+            <div class="fair" id="m5Fair">справедливая цена —</div>
+          </div>
+          <div class="chance-side">
+            <div class="box">
+              <div class="k">Прибыль 5м</div>
+              <div class="v" id="m5Pnl">—</div>
+              <div class="k" id="m5PnlSub" style="margin-top:3px">ставка —</div>
+            </div>
+            <div class="box">
+              <div class="k">Серия бота</div>
+              <div class="v" id="m5Streak">—</div>
+              <div class="k" id="m5Base" style="margin-top:3px">рынок —</div>
+            </div>
+            <div class="box">
+              <div class="k">Память 5м</div>
+              <div class="v" id="m5Memory">—</div>
+              <div class="k" id="m5MemorySub" style="margin-top:3px">live база —</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note" id="m5Rule">Правило стратегии загружается…</div>
+
+        <div class="past-lbl">Прошлое (новые слева · ▲ вверх / ▼ вниз · ✓ бот угадал / ✗ ошибся)</div>
+        <div class="strip" id="m5Strip"></div>
+      </div>
+
+    </div>
+
+    <!-- MIDDLE -->
+    <div class="col">
+
+      <!-- Chart -->
+      <div class="card">
+        <h2>График BTC/USDT · 1 мин <span class="tag">▲ ВВЕРХ / ▼ ВНИЗ — метки сделок</span></h2>
+        <div id="chart"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col">
+
+      <!-- Money stats -->
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Баланс</div>
+          <div class="v neutral tnum" id="balance">—</div>
+          <div class="x" id="balanceSub">старт $100</div>
+        </div>
+        <div class="stat">
+          <div class="k">Общая прибыль</div>
+          <div class="v neutral tnum" id="pnl">—</div>
+          <div class="x" id="pnlSub">ROI —</div>
+        </div>
+        <div class="stat">
+          <div class="k">Точность (все ставки)</div>
+          <div class="v neutral tnum" id="winRate">—</div>
+          <div class="x" id="winSub">0 завершено</div>
+        </div>
+        <div class="stat">
+          <div class="k">Всего ставок</div>
+          <div class="v tnum" id="totalPred">0</div>
+          <div class="x" id="pendingSub">0 в ожидании</div>
+        </div>
+        <div class="stat">
+          <div class="k">Точность ВВЕРХ</div>
+          <div class="v tnum txt-up" id="upRate">—</div>
+          <div class="x" id="upSub">0 ставок</div>
+        </div>
+        <div class="stat">
+          <div class="k">Точность ВНИЗ</div>
+          <div class="v tnum txt-down" id="downRate">—</div>
+          <div class="x" id="downSub">0 ставок</div>
+        </div>
+      </div>
+
+      <!-- Indicators -->
+      <div class="card">
+        <h2>Текущий сигнал и индикаторы</h2>
+        <div class="verdict">
+          <div class="big NONE" id="sigDir">ЖДЁМ</div>
+          <div class="meta">
+            <div class="lbl">Сигнал стратегии RSI+MACD</div>
+            <div class="conf" id="sigConf">нет сигнала</div>
+          </div>
+        </div>
+        <div class="irow"><span class="k">RSI (14)</span><span class="v" id="rsi">—</span></div>
+        <div class="irow"><span class="k">MACD гистограмма</span><span class="v" id="macd">—</span></div>
+        <div class="irow"><span class="k">Горизонт прогноза</span><span class="v" id="horizonLbl">—</span></div>
+        <div class="irow"><span class="k">Пауза между ставками</span><span class="v" id="cooldownLbl">—</span></div>
+        <div class="irow"><span class="k">Размер ставки</span><span class="v" id="stakeLbl">—</span></div>
+        <div class="irow"><span class="k">Среднее движение</span><span class="v" id="avgMove">—</span></div>
+      </div>
+
+      <!-- Recent bets -->
+      <div class="card">
+        <h2>Последние ставки</h2>
+        <table>
+          <thead><tr><th>Время</th><th>Напр.</th><th>Увер.</th><th>Вход</th><th>Итог</th><th>P&amp;L</th></tr></thead>
+          <tbody id="predBody"><tr><td colspan="6" style="color:var(--muted)">Пока нет ставок…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Backtest -->
+      <div class="card" id="backtestCard">
+        <div class="card-head">
+          <h2>Бэктест на истории</h2>
+          <button class="mini-btn" id="btToggle" type="button">Свернуть</button>
+        </div>
+        <div class="bt-grid">
+          <div class="fld"><span>Часов</span><input id="btHours" type="number" value="72" min="6" max="83"></div>
+          <div class="fld"><span>Мин. увер. %</span><input id="btConf" type="number" value="30" min="0" max="100"></div>
+          <div class="fld"><span>Горизонты (мин)</span><input id="btHorizons" type="text" value="1,3,5,15"></div>
+          <div class="fld"><span>Пауза (мин)</span><input id="btCooldown" type="number" value="3" min="0" max="60"></div>
+          <button class="primary" style="flex:0 0 auto;width:auto;padding:7px 14px" id="btRun">Запустить</button>
+        </div>
+        <div id="btResult"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="botModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="botModalTitle">
+    <div class="modal-head">
+      <div class="modal-title" id="botModalTitle">Настройки бота</div>
+      <button class="modal-close" id="botModalClose" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="ctrl">
+      <div class="auto-hint" style="display:block">Эти настройки уже выставлены оптимально. Основная рабочая стратегия — 5-минутная (кнопка «Авто 5м» на главной). Сюда можно не заходить.</div>
+      <div>
+        <div class="lab">Минимальная уверенность <b id="confVal">30%</b></div>
+        <input type="range" id="confSlider" min="0" max="100" step="5" value="30">
+      </div>
+      <div>
+        <div class="lab">Горизонт прогноза</div>
+        <select id="horizonSel">
+          <option value="1">1 минута</option>
+          <option value="3" selected>3 минуты</option>
+          <option value="5">5 минут</option>
+          <option value="15">15 минут</option>
+        </select>
+      </div>
+      <div>
+        <div class="lab">Пауза между ставками <b id="cooldownVal">3 мин</b></div>
+        <input type="range" id="cooldownSlider" min="0" max="30" step="1" value="3">
+      </div>
+      <div>
+        <div class="lab">Размер ставки <b id="stakeVal">$5</b></div>
+        <input type="range" id="stakeSlider" min="1" max="50" step="1" value="5">
+      </div>
+      <div class="btns">
+        <button id="pauseBtn">Пауза</button>
+        <button id="resetBtn" class="danger">Сбросить статистику</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let lastPrice = null;
+let headerTargetPrice = null;
+
+// ---- Chart ----
+const chart = LightweightCharts.createChart($("chart"), {
+  layout: { background: { color: "transparent" }, textColor: "#8893a7", fontFamily: "Inter" },
+  grid: { vertLines: { color: "rgba(255,255,255,.04)" }, horzLines: { color: "rgba(255,255,255,.04)" } },
+  timeScale: { timeVisible: true, secondsVisible: false, borderColor: "rgba(255,255,255,.08)" },
+  rightPriceScale: { borderColor: "rgba(255,255,255,.08)" },
+  crosshair: { mode: 0 },
+  autoSize: true,
+});
+const candleSeries = chart.addCandlestickSeries({
+  upColor: "#2dd4a7", downColor: "#f6566c",
+  borderUpColor: "#2dd4a7", borderDownColor: "#f6566c",
+  wickUpColor: "#2dd4a7", wickDownColor: "#f6566c",
+});
+const lineSeries = chart.addLineSeries({
+  color: "#f7a51a",
+  lineWidth: 2,
+  priceLineVisible: true,
+  crosshairMarkerVisible: true,
+});
+let chartMode = localStorage.getItem("chartMode") || "candles";
+let chartCandles = [];
+let markers = [];
+function normalizeCandles(candles){
+  const byTime = new Map();
+  (candles||[]).forEach(c=>{
+    if(c && c.time!=null && c.open!=null && c.high!=null && c.low!=null && c.close!=null){
+      byTime.set(Number(c.time), c);
+    }
+  });
+  return Array.from(byTime.values()).sort((a,b)=>a.time-b.time);
+}
+function lineDataFromCandles(candles){
+  return candles.map(c=>({time:c.time, value:c.close}));
+}
+function applyChartMode(){
+  const showCandles = chartMode === "candles";
+  candleSeries.applyOptions({ visible: showCandles });
+  lineSeries.applyOptions({ visible: !showCandles });
+  $("chartCandlesBtn")?.classList.toggle("active", showCandles);
+  $("chartLineBtn")?.classList.toggle("active", !showCandles);
+}
+function setCandles(c){
+  chartCandles = normalizeCandles(c);
+  candleSeries.setData(chartCandles);
+  lineSeries.setData(lineDataFromCandles(chartCandles));
+  applyChartMode();
+}
+function updateChartCandle(c){
+  if(!c || c.time==null) return;
+  const t = Number(c.time);
+  const idx = chartCandles.findIndex(x=>Number(x.time)===t);
+  if(idx >= 0) chartCandles[idx] = c;
+  else chartCandles.push(c);
+  chartCandles = normalizeCandles(chartCandles).slice(-320);
+  candleSeries.update(c);
+  lineSeries.update({time:c.time, value:c.close});
+}
+function addMarker(ts, signal, conf){
+  markers.push({ time: ts, position: signal==="UP"?"belowBar":"aboveBar",
+    color: signal==="UP"?"#2dd4a7":"#f6566c", shape: signal==="UP"?"arrowUp":"arrowDown",
+    text: (signal==="UP"?"▲":"▼")+conf+"%" });
+  markers = markers.slice(-60);
+  candleSeries.setMarkers(markers);
+}
+applyChartMode();
+new ResizeObserver(entries=>{
+  const rect = entries[0]?.contentRect;
+  if(rect && rect.width > 0 && rect.height > 0){
+    chart.applyOptions({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+  }
+}).observe($("chart"));
+
+// ---- Helpers ----
+function fmt(n,d=2){ return n==null? "—" : Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function rateClass(r){ return r>=55?"good":(r<=45?"bad":"neutral"); }
+function pnlClass(v){ return v>0?"good":(v<0?"bad":"neutral"); }
+function money(v){ return (v>=0?"+$":"−$")+Math.abs(v).toFixed(2); }
+function dirRu(d){ return d==="UP"?"▲ ВВЕРХ":(d==="DOWN"?"▼ ВНИЗ":"ЖДЁМ"); }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2400); }
+
+function updatePrice(p){
+  if(p==null) return;
+  $("price").textContent = "$"+fmt(p);
+  const a = $("priceArrow");
+  if(headerTargetPrice != null){
+    const diff = p - headerTargetPrice;
+    a.textContent = (diff>=0 ? "▲ +$" : "▼ -$") + Math.abs(diff).toFixed(2);
+    a.style.color = diff>=0 ? "var(--up)" : "var(--down)";
+  } else {
+    const up = lastPrice==null || p>=lastPrice;
+    a.textContent = lastPrice==null? "" : (p>lastPrice?"▲":(p<lastPrice?"▼":"="));
+    a.style.color = up? "var(--up)":"var(--down)";
+  }
+  lastPrice = p;
+}
+
+const START_BALANCE=100;
+// All header stats come from the bot's real live 5-minute track record.
+function updateStats(m5){
+  if(!m5) return;
+  const live=m5.live_stats||{};
+  const stake=(m5.stats&&m5.stats.stake)||live.stake||5;
+  const resolved=live.predicted||0;
+  const wins=live.wins||0, losses=live.losses||0;
+  const pnl=live.pnl||0;
+  const roi=live.roi_pct||0;
+  const balance=START_BALANCE+pnl;
+  const pending=(m5.current&&m5.current.prediction)?1:0;
+
+  const bal=$("balance"); bal.textContent="$"+fmt(balance); bal.className="v tnum "+pnlClass(pnl);
+  if($("headerBalance")) $("headerBalance").textContent="Баланс: $"+fmt(balance);
+  $("balanceSub").textContent="старт $"+fmt(START_BALANCE)+" · ставка $"+fmt(stake);
+  const pnlEl=$("pnl"); pnlEl.textContent=resolved? money(pnl):"—"; pnlEl.className="v tnum "+pnlClass(pnl);
+  $("pnlSub").textContent="ROI "+(resolved? roi+"%":"—")+" · ср. выплата ×"+(live.avg_payout_mult||"—");
+  const wr=$("winRate"); wr.textContent=resolved? live.win_rate+"%":"—"; wr.className="v tnum "+rateClass(live.win_rate);
+  $("winSub").textContent=wins+"П / "+losses+"М · "+resolved+" завершено";
+  $("totalPred").textContent=resolved+pending;
+  $("pendingSub").textContent=pending+" в ожидании";
+  $("upRate").textContent=live.up_pred? live.up_pred_win_rate+"%":"—";
+  $("upSub").textContent=(live.up_pred||0)+" ставок";
+  $("downRate").textContent=live.down_pred? live.down_pred_win_rate+"%":"—";
+  $("downSub").textContent=(live.down_pred||0)+" ставок";
+}
+
+function updateSignal(ind){
+  if(!ind) return;
+  const el=$("sigDir");
+  el.textContent=dirRu(ind.signal);
+  el.className="big "+(ind.signal||"NONE");
+  $("sigConf").textContent=ind.signal? "уверенность "+ind.confidence+"%" : "нет сигнала — ждём подходящий момент";
+  if(ind.rsi!=null) $("rsi").textContent=ind.rsi;
+  if(ind.macd_hist!=null){ $("macd").textContent=ind.macd_hist; $("macd").className="v "+(ind.macd_hist>=0?"txt-up":"txt-down"); }
+}
+
+// Recent bets table is driven by the 5-minute market (the one we actually trade).
+// Wins pay a variable amount based on entry odds; a loss costs the full stake.
+function updateRecent(){
+  const body=$("predBody");
+  const rows=[];
+  if(m5cur && m5cur.prediction){
+    rows.push({pending:true, ts:m5cur.start_ts, dir:m5cur.prediction,
+      conf:m5cur.confidence, entry:m5cur.open_price,
+      pnl:m5cur.unrealized_pnl, odds:m5cur.odds_price});
+  }
+  (m5Hist||[]).filter(w=>w.prediction).forEach(w=>{
+    const mult=w.payout_mult||2;
+    const pnl=w.correct? m5Stake*(mult-1) : -m5Stake;
+    rows.push({pending:false, ts:w.start_ts, dir:w.prediction, conf:w.confidence,
+      entry:w.open_price, correct:w.correct, pnl:pnl, odds:w.odds_price});
+  });
+  if(!rows.length){ body.innerHTML='<tr><td colspan="6" style="color:var(--muted)">Пока нет ставок — бот ждёт подходящего окна…</td></tr>'; return; }
+  body.innerHTML=rows.slice(0,7).map(r=>{
+    const t=new Date(r.ts).toLocaleTimeString("ru-RU");
+    const dr=r.dir==="UP"?"▲":"▼";
+    let res,pnl;
+    if(r.pending){
+      res='<span class="badge pending">идёт</span>';
+      if(r.pnl==null){ pnl='<span style="color:var(--muted)">—</span>'; }
+      else { pnl=`<span class="${r.pnl>=0?'txt-up':'txt-down'}">${money(r.pnl)}</span>`; }
+    } else {
+      res=r.correct?'<span class="badge win">ПОБЕДА</span>':'<span class="badge loss">ПРОИГРЫШ</span>';
+      pnl=`<span class="${r.pnl>=0?'txt-up':'txt-down'}">${money(r.pnl)}</span>`;
+    }
+    return `<tr><td>${t}</td><td class="${r.dir}">${dr}</td><td>${r.conf}%</td><td>$${fmt(r.entry)}</td><td>${res}</td><td>${pnl}</td></tr>`;
+  }).join("");
+}
+
+// ---- 5-min market ----
+let m5cur=null;
+let m5Hist=[];
+let m5Stake=5;
+let m5Snapshot=null;
+function m5StrategyRu(s){
+  const map={follow_lead:"идти за движением",reverse_lead:"против движения",
+    confirm_momentum:"вход по подтверждённому импульсу",fade_momentum:"против перегретого импульса"};
+  return map[s]||s;
+}
+function updateM5Current(cur){
+  m5cur=cur;
+  if(!cur) return;
+  headerTargetPrice = cur.open_price;
+  if($("headerTargetPrice")) $("headerTargetPrice").textContent="$"+fmt(cur.open_price);
+  if(cur.current_price!=null) updatePrice(cur.current_price);
+  $("m5Open").textContent="$"+fmt(cur.open_price);
+  $("m5Now").textContent="$"+fmt(cur.current_price);
+  const lead=$("m5Lead");
+  lead.textContent=dirRu(cur.leading)+" ("+(cur.move_pct>=0?"+":"")+cur.move_pct.toFixed(3)+"%)";
+  lead.style.color=cur.leading==="UP"?"var(--up)":"var(--down)";
+  const pred=$("m5Pred");
+  pred.textContent=cur.prediction? dirRu(cur.prediction):"ЖДЁМ";
+  pred.className="big "+(cur.prediction||"NONE");
+  const noSignalReason = cur.reasons?.length ? cur.reasons[cur.reasons.length-1] : "условия входа не выполнены";
+  $("m5Conf").textContent=cur.prediction? "уверенность "+cur.confidence+"%" : noSignalReason;
+  const pay=$("m5Payout");
+  if(cur.prediction && cur.payout!=null){
+    const cents=Math.round((cur.odds_price||0)*100);
+    let live="";
+    if(cur.unrealized_pnl!=null){
+      const u=cur.unrealized_pnl, cls=u>=0?'txt-up':'txt-down';
+      const nowCents=Math.round((cur.live_price||0)*100);
+      live=`<br>позиция сейчас ≈ <b class="${cls}">$${fmt(cur.position_value)}</b> (P&L <span class="${cls}">${money(u)}</span> · цена ${nowCents}¢, тикает с BTC)`;
+    }
+    pay.innerHTML=`ставка $${fmt(cur.stake)} → если угадает: <b class="txt-up">$${fmt(cur.payout)}</b> (×${cur.payout_mult}, профит +$${fmt(cur.profit)}) · вход ${cents}¢${live}`;
+  } else { pay.textContent=""; }
+  const st=$("m5Status");
+  if(!cur.prediction){
+    st.textContent=cur.memory_gate?.status==="blocked" ? "пауза по памяти" : "бот вне игры";
+    st.className="status wait";
+  }
+  else if(cur.winning){ st.textContent="сейчас ВЫИГРЫВАЕТ"; st.className="status win"; }
+  else { st.textContent="сейчас ПРОИГРЫВАЕТ"; st.className="status lose"; }
+  drawCountdown();
+  updateRecent();
+}
+function drawCountdown(){
+  if(!m5cur) return;
+  const ms=m5cur.end_ts-Date.now();
+  const el=$("m5Countdown");
+  if(ms<=0){ el.textContent="расчёт…"; return; }
+  const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000);
+  el.textContent=m+":"+String(s).padStart(2,"0");
+}
+setInterval(drawCountdown,1000);
+
+function updateM5(data){
+  if(!data) return;
+  m5Hist=data.history||[];
+  m5Stake=(data.stats&&data.stats.stake)||5;
+  m5Snapshot=data;
+  updateM5Current(data.current);
+  updateStats(data);
+  updateRecent();
+  const lastThr = data.min_last_candle_pct ? ` · свеча входа минимум ${data.min_last_candle_pct}%` : "";
+  const volThr = data.min_volatility_pct ? ` · волатильность минимум ${data.min_volatility_pct}%` : "";
+  $("m5Rule").innerHTML=`<b>Стратегия:</b> ${m5StrategyRu(data.strategy)} · вход на ${data.entry_min}-й минуте окна · цена ушла от цели минимум на ${data.min_move_pct}%${lastThr}${volThr}`;
+  const st=data.stats||{};
+  $("m5N").textContent=st.predicted||0;
+  const wr=$("m5WinRate"); wr.textContent=st.predicted? st.win_rate+"%":"—"; wr.className="big "+rateClass(st.win_rate);
+  $("m5Fair").textContent=st.predicted? `справедливая макс. цена ≈ ${st.win_rate}¢ (выше платить невыгодно)`:"справедливая цена —";
+  $("m5Pnl").innerHTML=st.predicted? `<span class="${st.pnl>=0?'txt-up':'txt-down'}">${money(st.pnl)}</span> · ROI ${st.roi}%`:"—";
+  $("m5PnlSub").textContent=st.predicted? `ставка $${st.stake} · ср. выплата ×${st.avg_payout_mult||'—'}`:"ставка —";
+  $("m5Base").textContent="рынок: ВВЕРХ "+(st.up_actual_rate||0)+"% / ВНИЗ "+(100-(st.up_actual_rate||0)).toFixed(1)+"%";
+  $("m5Streak").innerHTML=st.streak? `<span class="${st.streak_kind==='win'?'txt-up':'txt-down'}">${st.streak} ${st.streak_kind==='win'?'ставок без проигрыша':'проигрышей подряд'}</span>`:"—";
+  const live=data.live_stats||{};
+  const gate=data.memory_gate||{};
+  const mem=$("m5Memory");
+  mem.textContent=live.predicted? `${live.win_rate}% (${live.wins}/${live.predicted})`:"обучается";
+  mem.style.color=gate.status==="blocked"?"var(--red)":(gate.status==="trusted"?"var(--green)":"var(--accent2)");
+  const skipped=(live.total_windows||0)-(live.predicted||0);
+  $("m5MemorySub").textContent=`${gate.label||"Память"} · ставок ${live.predicted||0} из ${live.total_windows||0} окон (пропущено ${skipped})`;
+
+  const strip=$("m5Strip");
+  const hist=data.history||[];
+  if(!hist.length){ strip.innerHTML='<span style="color:var(--muted);font-size:12px">собираем историю окон…</span>'; return; }
+  strip.innerHTML=hist.map(w=>{
+    const result = w.prediction==null ? "skip" : (w.correct ? "win" : "loss");
+    const arrow = w.actual==='UP'?'▲':'▼';
+    const dotTitle=`${new Date(w.start_ts).toLocaleTimeString('ru-RU')} рынок ${w.actual==='UP'?'вверх':'вниз'} · старт $${fmt(w.open_price)} → закрытие $${fmt(w.close_price)}`;
+    const dot=`<div class="dot ${result}" title="${dotTitle}">${result==='skip'?'–':arrow}</div>`;
+    let mk; if(w.prediction==null) mk='<div class="mk skip">нет</div>';
+    else mk=w.correct?'<div class="mk ok">✓</div>':'<div class="mk no">✗</div>';
+    const t=new Date(w.start_ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="cell" title="бот ставил: ${w.prediction||'не ставил'} ${w.confidence||0}% · ${result==='win'?'угадал':result==='loss'?'ошибся':'пропуск'}">${dot}${mk}<div class="tm">${t}</div></div>`;
+  }).join("");
+}
+
+$("m5AutoBtn").onclick=async()=>{
+  const btn=$("m5AutoBtn"), hint=$("m5AutoHint");
+  const orig=btn.textContent;
+  btn.disabled=true; btn.textContent="Подбор…";
+  hint.className="m5-auto-hint warn";
+  hint.textContent="Ищу лучшую 5м стратегию по последним данным Binance…";
+  try{
+    const r=await fetch("/api/autotune-5m",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({hours:83,min_signals:30})});
+    const d=await r.json();
+    if(d.applied){
+      const b=d.best;
+      if(d.market5m) updateM5(d.market5m);
+      hint.className="m5-auto-hint ok";
+      hint.textContent=`Применено: ${m5StrategyRu(b.strategy)} · вход ${b.entry_min}м · порог ${b.min_move_pct}% · волат. ${b.min_volatility_pct}% · проверка ${b.test_win_rate}% (${b.wins}/${b.predicted})${d.relaxed?" · данных мало, порог снижен":""}.`;
+      toast(`Авто 5м: walk-forward ${b.test_win_rate}% · ${b.predicted} сигналов`);
+    } else {
+      hint.className="m5-auto-hint warn";
+      hint.textContent="Недостаточно 5м сигналов для надёжного подбора. Дай боту собрать больше истории или снизь порог сигналов.";
+      toast("Авто 5м: мало данных");
+    }
+  }catch(e){
+    hint.className="m5-auto-hint warn";
+    hint.textContent="Ошибка авто-подбора 5м: "+e;
+    toast("Ошибка авто 5м");
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
+};
+
+function applySnapshot(s){
+  setCandles(s.candles||[]);
+  markers=[];
+  (s.recent||[]).slice().reverse().forEach(r=>{ if(r.signal) addMarker(Math.floor(r.created_ts/1000),r.signal,r.confidence); });
+  updatePrice(s.price);
+  updateSignal(s.indicators);
+  updateM5(s.market5m);
+  $("horizonLbl").textContent=s.horizon_min+" мин";
+  $("cooldownLbl").textContent=s.cooldown_min+" мин";
+  $("stakeLbl").textContent="$"+s.stake;
+  $("horizonSel").value=String(s.horizon_min);
+  $("cooldownSlider").value=s.cooldown_min; $("cooldownVal").textContent=s.cooldown_min+" мин";
+  $("stakeSlider").value=s.stake; $("stakeVal").textContent="$"+s.stake;
+  $("confSlider").value=s.min_confidence; $("confVal").textContent=s.min_confidence+"%";
+  $("pauseBtn").textContent=s.paused? "Продолжить":"Пауза";
+}
+
+// ---- WebSocket ----
+let ws;
+function connect(){
+  ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/ws");
+  ws.onopen=()=>{ $("conn").innerHTML='<span class="dot"></span>в эфире'; $("conn").className="pill live"; };
+  ws.onclose=()=>{ $("conn").innerHTML='<span class="dot"></span>переподключение…'; $("conn").className="pill off"; setTimeout(connect,2000); };
+  ws.onmessage=ev=>{
+    const m=JSON.parse(ev.data);
+    if(m.type==="snapshot"){ applySnapshot(m.data); }
+    else if(m.type==="tick"){
+      updatePrice(m.data.price);
+      if(m.data.window5m){
+        updateM5Current(m.data.window5m);
+        if(m5Snapshot){ m5Snapshot.current=m.data.window5m; updateStats(m5Snapshot); }
+        refreshRecent();
+      }
+    }
+    else if(m.type==="candle"){
+      const c=m.data.candle; updateChartCandle(c);
+      updateSignal(m.data.indicators);
+      if(m.data.market5m) updateM5(m.data.market5m);
+    }
+  };
+}
+function refreshRecent(){ updateRecent(); }
+connect();
+
+$("chartCandlesBtn").onclick=()=>{
+  chartMode="candles";
+  localStorage.setItem("chartMode", chartMode);
+  applyChartMode();
+};
+$("chartLineBtn").onclick=()=>{
+  chartMode="line";
+  localStorage.setItem("chartMode", chartMode);
+  applyChartMode();
+};
+
+// ---- Controls ----
+async function control(action,value){
+  const r=await fetch("/api/control",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,value})});
+  return r.json();
+}
+$("confSlider").oninput=e=>{ $("confVal").textContent=e.target.value+"%"; };
+$("confSlider").onchange=e=>control("set_confidence",Number(e.target.value));
+$("horizonSel").onchange=e=>control("set_horizon",Number(e.target.value)).then(s=>{$("horizonLbl").textContent=s.horizon_min+" мин";});
+$("cooldownSlider").oninput=e=>{ $("cooldownVal").textContent=e.target.value+" мин"; };
+$("cooldownSlider").onchange=e=>control("set_cooldown",Number(e.target.value)).then(s=>{$("cooldownLbl").textContent=s.cooldown_min+" мин";});
+$("stakeSlider").oninput=e=>{ $("stakeVal").textContent="$"+e.target.value; };
+$("stakeSlider").onchange=e=>control("set_stake",Number(e.target.value)).then(s=>{$("stakeLbl").textContent="$"+s.stake;});
+$("pauseBtn").onclick=async()=>{ const paused=$("pauseBtn").textContent==="Пауза"; const s=await control(paused?"pause":"resume"); $("pauseBtn").textContent=s.paused?"Продолжить":"Пауза"; toast(s.paused?"Пауза — новых ставок нет":"Бот снова в работе"); };
+$("resetBtn").onclick=async()=>{ if(confirm("Сбросить всю статистику ставок?")){ const s=await control("reset"); if(s.market5m) updateM5(s.market5m); markers=[]; candleSeries.setMarkers([]); toast("Статистика сброшена"); } };
+
+// ---- Bot settings modal ----
+const botModal = $("botModal");
+function openBotModal(){
+  botModal.classList.add("show");
+  botModal.setAttribute("aria-hidden", "false");
+}
+function closeBotModal(){
+  botModal.classList.remove("show");
+  botModal.setAttribute("aria-hidden", "true");
+}
+$("botSettingsBtn").onclick=openBotModal;
+$("botModalClose").onclick=closeBotModal;
+
+botModal.onclick=e=>{ if(e.target===botModal) closeBotModal(); };
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && botModal.classList.contains("show")) closeBotModal(); });
+
+const backtestCard = $("backtestCard");
+const btToggle = $("btToggle");
+if (backtestCard && btToggle) {
+  const key = "backtestCollapsed";
+  const applyCollapsed = (collapsed) => {
+    backtestCard.classList.toggle("collapsed", collapsed);
+    btToggle.textContent = collapsed ? "Развернуть" : "Свернуть";
+  };
+  applyCollapsed(localStorage.getItem(key) === "1");
+  btToggle.onclick = () => {
+    const next = !backtestCard.classList.contains("collapsed");
+    localStorage.setItem(key, next ? "1" : "0");
+    applyCollapsed(next);
+  };
+}
+
+// ---- Backtest ----
+$("btRun").onclick=async()=>{
+  const hours=$("btHours").value, conf=$("btConf").value, hz=$("btHorizons").value, cd=$("btCooldown").value;
+  $("btResult").innerHTML='<div class="note">Запускаем бэктест…</div>';
+  try{
+    const r=await fetch(`/api/backtest?hours=${hours}&confidence=${conf}&horizons=${hz}&cooldown=${cd}`);
+    const d=await r.json();
+    const rows=d.results.map(x=>{
+      const cls=rateClass(x.win_rate);
+      const col=cls==="good"?"var(--green)":(cls==="bad"?"var(--red)":"var(--accent2)");
+      return `<tr><td>${x.horizon_min}м</td><td>${x.total}</td>
+        <td style="color:${col};font-weight:800">${x.win_rate}%</td>
+        <td class="txt-up">${x.up_win_rate}% (${x.up_total})</td>
+        <td class="txt-down">${x.down_win_rate}% (${x.down_total})</td>
+        <td>${x.avg_move_pct}%</td></tr>`;
+    }).join("");
+    $("btResult").innerHTML=`
+      <div class="note">${d.candles} свечей · $${fmt(d.price_from)} → $${fmt(d.price_to)} · мин. увер. ${d.confidence}% · пауза ${d.cooldown}м</div>
+      <table style="margin-top:10px"><thead><tr><th>Горизонт</th><th>Сигналов</th><th>Точность</th><th>ВВЕРХ</th><th>ВНИЗ</th><th>Ср. движ.</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <div class="note">50% = случайность. Выше ~55% (с учётом комиссий) уже интересно.</div>`;
+  }catch(e){ $("btResult").innerHTML='<div class="note" style="color:var(--red)">Ошибка бэктеста: '+e+'</div>'; }
+};
+</script>
+</body>
+</html>
